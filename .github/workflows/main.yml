@@ -1,0 +1,33 @@
+name: START
+
+on:
+  schedule:
+    - cron: '*/50 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: docker-abc
+  cancel-in-progress: true
+
+jobs:
+  run-docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Docker container
+        run: |
+          docker run \
+            --cap-add=NET_ADMIN \
+            --device=/dev/net/tun \
+            stickieclay/jankie
+
+      - name: Restart workflow with gh CLI
+        if: always()
+        run: |
+          gh workflow run main.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
